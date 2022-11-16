@@ -8,17 +8,17 @@ KeyPaiSho.TileCodes = {
     WhiteO: 'WO',
     WhiteD: 'WD',
     Lotus: 'LO',
-    Orchid: 'OR',
+    Orchid: 'O',
     FireLily: 'F',
-    Dahlia: 'DA',
-    Stone: 'S',
-    Knotweed: 'KN',
+    Dahlia: 'D',
+    Stone: 'R',
+    Knotweed: 'K',
     Wheel: 'W',
     Boat: 'B',
-    Badgermole: 'BM',
-    Dragon: 'D',
-    SkyBison: 'SB',
-    Koi: 'K'
+    Badgermole: 'Badgermole',
+    Dragon: 'Dragon',
+    SkyBison: 'Bison',
+    Koi: 'Koi'
 };
 
 KeyPaiSho.TileNames = [
@@ -53,7 +53,7 @@ KeyPaiSho.Tile = function (code, ownerCode) {
         debug("INCORRECT OWNER CODE");
     }
     this.id = tileId++;
-    //    this.drained = false;
+    this.drained = false;
     this.selectedFromPile = false;
 
     if (this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TileCodes.Orchid
@@ -229,6 +229,7 @@ KeyPaiSho.Tile.prototype.getMovementDirectionWording = function () {
 KeyPaiSho.Tile.prototype.movementMustPreserveDirection = function () {
     return !(this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TilesCodes.Dahlia);
 };
+
 
 KeyPaiSho.Tile.prototype.drain = function () {
     if (this.type === BASIC_FLOWER) {
