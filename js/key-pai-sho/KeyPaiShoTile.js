@@ -8,7 +8,17 @@ KeyPaiSho.TileCodes = {
 	WhiteO: 'WO',
 	WhiteD: 'WD',
 	Lotus: 'LO',
-	Orchid: 'OR'
+	Orchid: 'OR',
+	FireLily: 'FL',
+	Dahlia: 'D',
+	Stone: 'S',
+	Knotweed: 'KW',
+	Wheel: 'W',
+	Boat: 'B',
+	Badgermole: 'BM',
+	Dragon: 'DR',
+	SkyBison: 'SB',
+	Koi: 'K'
 };
 
 KeyPaiSho.Tile = function(code, ownerCode) {
@@ -25,7 +35,8 @@ KeyPaiSho.Tile = function(code, ownerCode) {
 	this.drained = false;
 	this.selectedFromPile = false;
 
-	if (this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TileCodes.Orchid) {
+	if (this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TileCodes.Orchid
+			|| this.code === KeyPaiSho.TileCodes.FireLily || this.code === KeyPaiSho.TileCodes.Dahlia) {
 		this.type = SPECIAL_FLOWER;
 		this.setSpecialFlowerInfo();
 	} else if (this.code.length === 2 && (this.code.includes('R') || this.code.includes('W'))) {
@@ -37,8 +48,8 @@ KeyPaiSho.Tile = function(code, ownerCode) {
 		} else if (this.basicColorCode === 'W') {
 			this.basicColorName = WHITE;
 		}
-	} else if (this.code === 'R' || this.code === 'W' || this.code === 'K' || this.code === 'B'
-				|| this.code === 'P' || this.code === 'M' || this.code === 'T') {
+	} else if (this.code === 'S' || this.code === 'KW' || this.code === 'W' || this.code === 'B'
+				|| this.code === 'BM' || this.code === 'DR' || this.code === 'SB' || this.code === 'K') {
 		this.type = ACCENT_TILE;
 		this.setAccentInfo();
 	} else {
@@ -47,20 +58,22 @@ KeyPaiSho.Tile = function(code, ownerCode) {
 }
 
 KeyPaiSho.Tile.prototype.setAccentInfo = function() {
-	if (this.code === 'R') {
-		this.accentType = ROCK;
+	if (this.code === 'S') {
+		this.accentType = STONE;
+	} else if (this.code === 'KW') {
+		this.accentType = KNOTWEED;
 	} else if (this.code === 'W') {
 		this.accentType = WHEEL;
-	} else if (this.code === 'K') {
-		this.accentType = KNOTWEED;
 	} else if (this.code === 'B') {
 		this.accentType = BOAT;
-	} else if (this.code === 'P') {
-		this.accentType = POND;
-	} else if (this.code === 'M') {
-		this.accentType = BAMBOO;
-	} else if (this.code === 'T') {
-		this.accentType = LION_TURTLE;
+	} else if (this.code === 'BM') {
+		this.accentType = BADGERMOLE;
+	} else if (this.code === 'DR') {
+		this.accentType = DRAGON;
+	} else if (this.code === 'SB') {
+		this.accentType = SKY_BISON;
+	} else if (this.code === 'K') {
+		this.accentType = KOI;
 	}
 };
 
@@ -69,6 +82,10 @@ KeyPaiSho.Tile.prototype.setSpecialFlowerInfo = function() {
 		this.specialFlowerType = WHITE_LOTUS;
 	} else if (this.code === KeyPaiSho.TileCodes.Orchid) {
 		this.specialFlowerType = ORCHID;
+	} else if (this.code === KeyPaiSho.TileCodes.FireLily) {
+		this.specialFlowerType = FIRE_LILY;
+	} else if (this.code === KeyPaiSho.TileCodes.Dahlia) {
+		this.specialFlowerType = DAHLIA;
 	}
 };
 
@@ -125,8 +142,20 @@ KeyPaiSho.Tile.prototype.getMoveDistance = function() {
 		return 2;
 	} else if (this.code === KeyPaiSho.TileCodes.Orchid) {
 		return 1;
+	} else if (this.code === KeyPaiSho.TileCodes.FireLily) {
+		return 6;
+	} else if (this.code === KeyPaiSho.TileCodes.Dahlia) {
+		return 20;
+	} else if (this.code === KeyPaiSho.TileCodes.Knotweed) {
+		return 2;
+	} else if (this.code === KeyPaiSho.TileCodes.Wheel) {
+		return 3;
+	} else if (this.code === KeyPaiSho.TileCodes.Boat) {
+		return 4;
+	} else if (this.code === KeyPaiSho.TileCodes.Stone) {
+		return 0;
 	}
-	return 0;
+	return 5;
 };
 
 KeyPaiSho.Tile.prototype.getHarmonyDistance = function() {
