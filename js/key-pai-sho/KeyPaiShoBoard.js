@@ -1388,8 +1388,14 @@ KeyPaiSho.Board.prototype.setCenterPointGatePossibleMove = function (player, til
 
 KeyPaiSho.Board.prototype.ensureCenterPointGateNotPossibleMove = function (player, tile) {
     var centerPoint = this.closeTheGardenGate();
+    var centerPoint2 = this.getBoardPoint(8, 9);
+    var centerPoint3 = this.getBoardPoint(9, 8);
+    var centerPoint4 = this.getBoardPoint(9, 9);
     if (centerPoint) {
         centerPoint.removeType(POSSIBLE_MOVE);
+        centerPoint2.removeType(POSSIBLE_MOVE);
+        centerPoint3.removeType(POSSIBLE_MOVE);
+        centerPoint4.removeType(POSSIBLE_MOVE);
     }
 };
 
