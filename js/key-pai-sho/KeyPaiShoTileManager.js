@@ -56,6 +56,10 @@ KeyPaiSho.TileManager.prototype.loadOneOfEach = function (ownerCode) {
     tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Wheel, ownerCode));
     tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Knotweed, ownerCode));
     tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Boat, ownerCode));
+    tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Dragon, ownerCode));
+    tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Koi, ownerCode));
+    tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.SkyBison, ownerCode));
+    tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Badgermole, ownerCode));
 
     tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Red3, ownerCode));
     tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.RedO, ownerCode));

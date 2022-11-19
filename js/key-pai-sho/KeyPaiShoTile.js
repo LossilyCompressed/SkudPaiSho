@@ -21,26 +21,25 @@ KeyPaiSho.TileCodes = {
     Koi: 'Koi'
 };
 
-KeyPaiSho.TileNames = [
-    KeyPaiSho.TileCodes.Red3 = 'Rose',
-    KeyPaiSho.TileCodes.RedO = 'Chrysanthemum',
-    KeyPaiSho.TileCodes.RedD = 'Rhododendron',
-    KeyPaiSho.TileCodes.White3 = 'Lily',
-    KeyPaiSho.TileCodes.WhiteO = 'Jasmine',
-    KeyPaiSho.TileCodes.WhiteD = 'Jade',
-    KeyPaiSho.TileCodes.Lotus = 'Lotus',
-    KeyPaiSho.TileCodes.Orchid = 'Orchid',
-    KeyPaiSho.TileCodes.FireLily = 'Fire Lily',
-    KeyPaiSho.TileCodes.Dahlia = 'Dahlia',
-    KeyPaiSho.TileCodes.Wheel = 'Wheel',
-    KeyPaiSho.TileCodes.Stone = 'Stone',
-    KeyPaiSho.TileCodes.Boat = 'Boat',
-    KeyPaiSho.TileCodes.Knotweed = 'Knotweed',
-    KeyPaiSho.TileCodes.Dragon = 'Dragon',
-    KeyPaiSho.TileCodes.SkyBison = 'Sky Bison',
-    KeyPaiSho.TileCodes.Badgermole = 'Badgermole',
-    KeyPaiSho.TileCodes.Koi = 'Koi'
-];
+KeyPaiSho.TileNames = {};
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Red3] = 'Rose';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.RedO] = 'Chrysanthemum';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.RedD] = 'Rhododendron';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.White3] = 'Lily';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.WhiteO] = 'Jasmine';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.WhiteD] = 'Jade';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Lotus] = 'Lotus';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Orchid] = 'Orchid';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.FireLily] = 'Fire Lily';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Dahlia] = 'Dahlia';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Wheel] = 'Wheel';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Stone] = 'Stone';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Boat] = 'Boat';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Knotweed] = 'Knotweed';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Dragon] = 'Dragon';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.SkyBison] = 'Sky Bison';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Badgermole] = 'Badgermole';
+KeyPaiSho.TileNames[KeyPaiSho.TileCodes.Koi] = 'Koi';
 
 KeyPaiSho.Tile = function (code, ownerCode) {
     this.code = code;
@@ -78,41 +77,7 @@ KeyPaiSho.Tile = function (code, ownerCode) {
     } else {
         debug("Error: Unknown tile type");
     }
-}
-
-/*
-KeyPaiSho.Tile.prototype.setAccentInfo = function() {
-    if (this.code === 'S') {
-        this.accentType = STONE;
-    } else if (this.code === 'KW') {
-        this.accentType = KNOTWEED;
-    } else if (this.code === 'W') {
-        this.accentType = WHEEL;
-    } else if (this.code === 'B') {
-        this.accentType = BOAT;
-    } else if (this.code === 'BM') {
-        this.accentType = BADGERMOLE;
-    } else if (this.code === 'DR') {
-        this.accentType = DRAGON;
-    } else if (this.code === 'SB') {
-        this.accentType = SKY_BISON;
-    } else if (this.code === 'K') {
-        this.accentType = KOI;
-    }
 };
-
-KeyPaiSho.Tile.prototype.setSpecialFlowerInfo = function() {
-    if (this.code === KeyPaiSho.TileCodes.Lotus) {
-        this.specialFlowerType = WHITE_LOTUS;
-    } else if (this.code === KeyPaiSho.TileCodes.Orchid) {
-        this.specialFlowerType = ORCHID;
-    } else if (this.code === KeyPaiSho.TileCodes.FireLily) {
-        this.specialFlowerType = FIRE_LILY;
-    } else if (this.code === KeyPaiSho.TileCodes.Dahlia) {
-        this.specialFlowerType = DAHLIA;
-    }
-};
-*/
 
 KeyPaiSho.Tile.prototype.getConsoleDisplay = function () {
     if (!this.drained) {
@@ -149,22 +114,6 @@ KeyPaiSho.Tile.prototype.formsHarmonyWith = function (otherTile) {
 
     return true;
 };
-
-/*
-KeyPaiSho.Tile.prototype.clashesWith = function(otherTile) {
-    if (newOrchidClashRule) {
-        if (this.ownerName !== otherTile.ownerName) {
-            if (this.specialFlowerType === ORCHID || otherTile.specialFlowerType === ORCHID) {
-                return true;
-            }
-        }
-    }
-
-    return (this.type === BASIC_FLOWER && otherTile.type === BASIC_FLOWER 
-        && this.basicColorCode !== otherTile.basicColorCode 
-        && this.basicValue === otherTile.basicValue);
-};
-*/
 
 KeyPaiSho.Tile.prototype.getMoveDistance = function () {
     if (this.type === BASIC_FLOWER) {
@@ -227,7 +176,7 @@ KeyPaiSho.Tile.prototype.getMovementDirectionWording = function () {
 };
 
 KeyPaiSho.Tile.prototype.movementMustPreserveDirection = function () {
-    return !(this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TilesCodes.Dahlia);
+    return !(this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TileCodes.Dahlia);
 };
 
 
@@ -249,48 +198,6 @@ KeyPaiSho.Tile.prototype.getCopy = function () {
     return new KeyPaiSho.Tile(this.code, this.ownerCode);
 };
 
-/*
-KeyPaiSho.Tile.getClashTileCode = function (tileCode) {
-    if (tileCode.length === 2) {
-        if (tileCode.startsWith("R")) {
-            return "W" + tileCode.charAt(1);
-        } else if (tileCode.startsWith("W")) {
-            return "R" + tileCode.charAt(1);
-        }
-    }
+KeyPaiSho.Tile.getTileName = function (tileCode) {
+    return KeyPaiSho.TileNames[tileCode];
 };
-*/
-// Tile.getTileHeading = function(tileCode) {
-// 	var heading = Tile.getTileName(tileCode);
-
-// 	if (tileCode.length ===  1) {
-// 		return heading;
-// 	}
-
-// 	// For Basic Flower Tile, add simple name (like "Red 3")
-
-// 	heading += " (";
-// 	if ()
-// };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
