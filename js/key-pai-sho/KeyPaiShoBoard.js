@@ -407,6 +407,10 @@ KeyPaiSho.Board.prototype.putTileOnPoint = function (tile, notationPoint) {
     point.putTile(tile);
 };
 
+KeyPaiSho.Board.prototype.canPlaceAccentTile = function (point) {
+    return point.tile && point.tile.type !== ACCENT_TILE;
+};
+
 KeyPaiSho.Board.prototype.placeAccent = function (tile, notationPoint, extraPlacementPoint) {
     var rowAndCol = notationPoint.rowAndColumn;
     var boardPoint = this.cells[rowAndCol.row][rowAndCol.col];
@@ -574,101 +578,8 @@ KeyPaiSho.Board.prototype.drainAndTrapTilesSurroundingPointIfNeeded = function (
     }
 };
 
-KeyPaiSho.Board.prototype.whiteLotusProtected = function (lotusTile) {
-    if (lotusNoCapture || simplest) {
-        return true;
-    }
-
-    if (simpleSpecialFlowerRule) {
-        return true;	// Simplest? Cannot be captured.
-    }
-
-    // Testing Lotus never protected:
-    return false;
-
-    // ----------- //
-
-    // Protected if: player also has Blooming Orchid 
-    var isProtected = false;
-    this.cells.forEach(function (row) {
-        row.forEach(function (boardPoint) {
-            if (boardPoint.hasTile() && boardPoint.tile.specialFlowerType === ORCHID
-                && boardPoint.tile.ownerName === lotusTile.ownerName
-                && !boardPoint.isType(GATE)) {
-                isProtected = true;
-            }
-        });
-    });
-    return isProtected;
-};
-
-KeyPaiSho.Board.prototype.orchidCanCapture = function (orchidTile) {
-    if (simpleSpecialFlowerRule || simplest) {
-        return false;	// Simplest? Never can capture.
-    }
-
-    // Note: This method does not check if other tile is protected from capture.
-    var orchidCanCapture = false;
-    this.cells.forEach(function (row) {
-        row.forEach(function (boardPoint) {
-            if (boardPoint.hasTile() && boardPoint.tile.specialFlowerType === WHITE_LOTUS
-                && boardPoint.tile.ownerName === orchidTile.ownerName
-                && !boardPoint.isType(GATE)) {
-                orchidCanCapture = true;
-            }
-        });
-    });
-    return orchidCanCapture;
-};
-
-KeyPaiSho.Board.prototype.orchidVulnerable = function (orchidTile) {
-    if (newOrchidVulnerableRule) {
-        var orchidVulnerable = false;
-        // Orchid vulnerable if opponent White Lotus is on board
-        this.cells.forEach(function (row) {
-            row.forEach(function (boardPoint) {
-                if (boardPoint.hasTile() && boardPoint.tile.specialFlowerType === WHITE_LOTUS
-                    && boardPoint.tile.ownerName !== orchidTile.ownerName) {
-                    orchidVulnerable = true;
-                }
-            });
-        });
-        return orchidVulnerable;
-    }
-
-    if (simpleSpecialFlowerRule) {
-        return true;	// Simplest? Always vulnerable.
-    }
-
-    if (lotusNoCapture || simplest) {
-        // Changing Orchid vulnerable when player has a Blooming Lotus
-        var orchidVulnerable = false;
-        this.cells.forEach(function (row) {
-            row.forEach(function (boardPoint) {
-                if (!boardPoint.isType(GATE) && boardPoint.hasTile() && boardPoint.tile.specialFlowerType === WHITE_LOTUS
-                    && boardPoint.tile.ownerName === orchidTile.ownerName) {
-                    orchidVulnerable = true;
-                }
-            });
-        });
-        return orchidVulnerable;
-    }
-
-    /* ======= Original Rules: ======= */
-
-    var orchidVulnerable = false;
-    this.playedWhiteLotusTiles.forEach(function (lotus) {
-        if (lotus.ownerName === orchidTile.ownerName) {
-            orchidVulnerable = true;
-        }
-    });
-    if (orchidVulnerable) {
-        return true;
-    }
-};
-
-KeyPaiSho.Board.prototype.canCapture = function (boardPointStart, boardPointEnd) {
-    return boardPointStart.tile.code === KeyPaiSho.TileCodes.Dragon
+KeyPaiSho.Board.prototype.canCapture = function (tile, boardPointEnd) {
+    return tile.code === KeyPaiSho.TileCodes.Dragon
         && (boardPointEnd.tile.code !== KeyPaiSho.TileCodes.Badgermole || boardPointEnd.tile.riderTile === null);
 };
 
@@ -699,7 +610,7 @@ KeyPaiSho.Board.prototype.couldMoveTileToPoint = function (player, boardPointSta
 
     var canCapture = false;
     if (boardPointEnd.hasTile()) {
-        canCapture = this.canCapture(boardPointStart, boardPointEnd);
+        canCapture = this.canCapture(tile, boardPointEnd);
     }
 
     // If endpoint has a tile there that can't be captured, that is wrong.
@@ -738,7 +649,7 @@ KeyPaiSho.Board.prototype.canMoveTileToPoint = function (player, boardPointStart
 
     var canCapture = false;
     if (boardPointEnd.hasTile()) {
-        canCapture = this.canCapture(boardPointStart, boardPointEnd);
+        canCapture = this.canCapture(tile, boardPointEnd);
     }
 
     // If endpoint has a tile there that can't be captured, that is wrong.
@@ -967,7 +878,7 @@ KeyPaiSho.Board.prototype.getTileHarmonies = function (boardPoint) {
     var rowAndCol = boardPoint;
     var tileHarmonies = [];
 
-    if (tile.riderTile !== null) {
+    if (tile.riderTile) {
         tile = tile.riderTile;
     }
 
@@ -1169,12 +1080,7 @@ KeyPaiSho.Board.prototype.getAdjacentDiagonalPointsPotentialPossibleMoves = func
 
 KeyPaiSho.Board.prototype.targetPointHasTileThatCanBeCaptured = function (tile, movementInfo, originPoint, targetPoint, isDeploy) {
     return targetPoint.hasTile()
-        && this.canCapture(originPoint, targetPoint);
-};
-
-KeyPaiSho.Board.prototype.tileCanCapture = function (tile, movementInfo, fromPoint, targetPoint) {
-    return tile.canCapture(targetPoint.tile)
-        || (tile.type === AdevarTileType.secondFace && targetPoint.tile.type === AdevarTileType.hiddenTile);	// Allow attempting to capture HT with any SFT
+        && this.canCapture(tile, targetPoint);
 };
 
 KeyPaiSho.Board.prototype.tileCanMoveThroughPoint = function (tile, movementInfo, targetPoint, fromPoint) {
@@ -1290,20 +1196,24 @@ KeyPaiSho.Board.prototype.setPossibleMovesForMovement = function (movementInfo, 
         }
     }
 };
+
 KeyPaiSho.Board.standardMovementFunction = function (board, originPoint, boardPointAlongTheWay, movementInfo, moveStepNumber) {
     var mustPreserveDirection = movementInfo.mustPreserveDirection;	// True means the tile couldn't turn as it goes
     return board.getAdjacentPointsPotentialPossibleMoves(boardPointAlongTheWay, originPoint, mustPreserveDirection, movementInfo);
 };
+
 KeyPaiSho.Board.diagonalMovementFunction = function (board, originPoint, boardPointAlongTheWay, movementInfo, moveStepNumber) {
     var mustPreserveDirection = movementInfo.mustPreserveDirection;
     return board.getAdjacentDiagonalPointsPotentialPossibleMoves(boardPointAlongTheWay, originPoint, mustPreserveDirection, movementInfo);
 };
+
 KeyPaiSho.Board.standardPlusDiagonalMovementFunction = function (board, originPoint, boardPointAlongTheWay, movementInfo, moveStepNumber) {
     /* Preserve direction is not working for this... */
     var mustPreserveDirection = movementInfo.mustPreserveDirection;
     var movePoints = board.getAdjacentPointsPotentialPossibleMoves(boardPointAlongTheWay, originPoint, mustPreserveDirection, movementInfo);
     return movePoints.concat(board.getAdjacentDiagonalPointsPotentialPossibleMoves(boardPointAlongTheWay, originPoint, mustPreserveDirection, movementInfo));
 };
+
 KeyPaiSho.Board.prototype.setPossibleMovementPointsFromMovePoints = function (movePoints, nextPossibleMovementPointsFunction, tile, movementInfo, originPoint, distanceRemaining, moveStepNumber) {
     if (distanceRemaining === 0
         || !movePoints
@@ -1525,26 +1435,11 @@ KeyPaiSho.Board.prototype.setGuestGateOpen = function () {
     }
 };
 
-KeyPaiSho.Board.prototype.revealPossiblePlacementPoints = function (tile) {
-    var self = this;
-
+KeyPaiSho.Board.prototype.revealPossibleAccentPlacementPoints = function () {
+    var board = this;
     this.cells.forEach(function (row) {
         row.forEach(function (boardPoint) {
-            var valid = false;
-
-            if (
-                (tile.accentType === ROCK && self.canPlaceStone(boardPoint))
-                || (tile.accentType === WHEEL && self.canPlaceWheel(boardPoint))
-                || (tile.accentType === KNOTWEED && self.canPlaceKnotweed(boardPoint))
-                || (tile.accentType === BOAT && self.canPlaceBoat(boardPoint, tile))
-                || (tile.accentType === BAMBOO && self.canPlaceBamboo(boardPoint, tile))
-                || (tile.accentType === POND && self.canPlacePond(boardPoint, tile))
-                || (tile.accentType === LION_TURTLE && self.canPlaceLionTurtle(boardPoint, tile))
-            ) {
-                valid = true;
-            }
-
-            if (valid) {
+            if (board.canPlaceAccentTile(this)) {
                 boardPoint.addType(POSSIBLE_MOVE);
             }
         });
