@@ -8,9 +8,9 @@ KeyPaiSho.TileCodes = {
     WhiteO: 'WO',
     WhiteD: 'WD',
     Lotus: 'LO',
-    Orchid: 'O',
-    FireLily: 'F',
-    Dahlia: 'D',
+    Orchid: 'OR',
+    FireLily: 'FL',
+    Dahlia: 'DA',
     Stone: 'R',
     Knotweed: 'K',
     Wheel: 'W',
@@ -92,23 +92,14 @@ KeyPaiSho.Tile.prototype.getImageName = function () {
 };
 
 KeyPaiSho.Tile.prototype.formsHarmonyWith = function (otherTile) {
-    if (this.type === ACCENT_TILE || otherTile.type === ACCENT_TILE) {
-        return false;
-    }
-
     if (this.code === KeyPaiSho.TileCodes.Lotus || otherTile.code === KeyPaiSho.TileCodes.Lotus) {
         return true;
     }
 
-    if (otherTile.ownerName !== this.ownerName) {
-        return false;
-    }
-
-    if (this.type === SPECIAL_FLOWER && otherTile.type === SPECIAL_FLOWER) {
-        return false;
-    }
-
-    if (this.code === KeyPaiSho.TileCodes.FireLily || otherTile.code === KeyPaiSho.TileCodes.FireLily) {
+    if (otherTile.ownerName !== this.ownerName
+        || (this.type === SPECIAL_FLOWER && otherTile.type === SPECIAL_FLOWER)
+        || this.code === KeyPaiSho.TileCodes.FireLily || otherTile.code === KeyPaiSho.TileCodes.FireLily
+        || this.code === otherTile.code) {
         return false;
     }
 

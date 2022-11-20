@@ -6,7 +6,9 @@ var OTHER_PLAYER = "OTHER";
 
 // Turn actions ----------------
 var PLANTING = "Planting";
+var PLACING = "Placing";
 var ARRANGING = "Arranging";
+var MOVING = "Moving";
 
 var DEPLOY = "Deploy";
 var MOVE = "Move";
@@ -25,43 +27,43 @@ var PASS_TURN = "--";
 // ---------
 
 function RowAndColumn(row, col) {
-	this.row = row;
-	this.col = col;
+    this.row = row;
+    this.col = col;
 
-	this.x = col - 8;
-	this.y = 8 - row;
-	this.notationPointString = this.x + "," + this.y;
+    this.x = col - 8;
+    this.y = 8 - row;
+    this.notationPointString = this.x + "," + this.y;
 }
 
-RowAndColumn.prototype.samesies = function(other) {
-	return this.row === other.row && this.col === other.col;
+RowAndColumn.prototype.samesies = function (other) {
+    return this.row === other.row && this.col === other.col;
 };
 
-RowAndColumn.prototype.getNotationPoint = function() {
-	return new NotationPoint(this.notationPointString);
+RowAndColumn.prototype.getNotationPoint = function () {
+    return new NotationPoint(this.notationPointString);
 };
 
 // --------------------------------------------- // 
 
 function NotationPoint(text) {
-	this.pointText = text;
+    this.pointText = text;
 
-	var parts = this.pointText.split(',');
+    var parts = this.pointText.split(',');
 
-	this.x = parseInt(parts[0]);
-	this.y = parseInt(parts[1]);
+    this.x = parseInt(parts[0]);
+    this.y = parseInt(parts[1]);
 
-	var col = this.x + 8;
-	var row = Math.abs(this.y - 8);
+    var col = this.x + 8;
+    var row = Math.abs(this.y - 8);
 
-	this.rowAndColumn = new RowAndColumn(row, col);
+    this.rowAndColumn = new RowAndColumn(row, col);
 }
 
-NotationPoint.prototype.samesies = function(other) {
-	return this.x === other.x && this.y === other.y;
+NotationPoint.prototype.samesies = function (other) {
+    return this.x === other.x && this.y === other.y;
 };
 
-NotationPoint.prototype.toArr = function() {
-	return [this.x, this.y];
+NotationPoint.prototype.toArr = function () {
+    return [this.x, this.y];
 };
 

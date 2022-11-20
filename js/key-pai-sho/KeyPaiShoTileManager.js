@@ -70,6 +70,8 @@ KeyPaiSho.TileManager.prototype.loadOneOfEach = function (ownerCode) {
 
     tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Lotus, ownerCode));
     tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Orchid, ownerCode));
+    tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.Dahlia, ownerCode));
+    tiles.push(new KeyPaiSho.Tile(KeyPaiSho.TileCodes.FireLily, ownerCode));
 
     return tiles;
 };
