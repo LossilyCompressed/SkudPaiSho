@@ -43,8 +43,6 @@ KeyPaiSho.GameManager.prototype.runNotationMove = function (move, withActuate, m
         this.centerGateActive = false;
     }
 
-    var errorFound = false;
-
     if (move.moveNum === 0 && move.accentTiles) {
         var self = this;
         var allSpecialCodes = [
@@ -89,7 +87,7 @@ KeyPaiSho.GameManager.prototype.runNotationMove = function (move, withActuate, m
         }
         // Just placing tile on board
         var tile = this.tileManager.grabTile(move.player, move.playedTile);
-        var placeTileResults = this.board.placeTile(tile, move.endPoint, this.tileManager);
+        var placeTileResults = this.board.placeTile(tile, move.endPoint);
 
         if (placeTileResults.openGardenGate) {
             this.centerGateActive = true;
@@ -98,7 +96,7 @@ KeyPaiSho.GameManager.prototype.runNotationMove = function (move, withActuate, m
         this.buildPlantingGameLogText(move, tile);
     } else if (move.moveType === PLACING) {
         var tile = this.tileManager.grabTile(move.player, move.playedTile);
-        this.board.placeTile(tile, move.endPoint, this.tileManager);
+        this.board.placeTile(tile, move.endPoint, move.extraStonePlacementPoint);
     } else if (move.moveType === MOVING) {
         moveResults = this.board.moveTile(move.player, move.startPoint, move.endPoint);
         move.capturedTile = moveResults.capturedTile;
@@ -174,8 +172,10 @@ KeyPaiSho.GameManager.prototype.hidePossibleMovePoints = function (ignoreActuate
     }
 };
 
-KeyPaiSho.GameManager.prototype.revealPossiblePlacementPoints = function (player, tile, ignoreActuate) {
-    if (tile.type !== ACCENT_TILE) {
+KeyPaiSho.GameManager.prototype.revealPossiblePlacementPoints = function (player, tile, additionalPoints, ignoreActuate) {
+    if (tile === KeyPaiSho.TileCodes.Stone) {
+        this.board.revealPossibleAccentPlacementPoints(player, tile);
+    } else if (tile.type !== ACCENT_TILE) {
         this.board.setOpenGatePossibleMoves();
 
         if (tile.code === KeyPaiSho.TileCodes.Lotus && this.board.playerControlsLessThanTwoGates(player)) {
@@ -184,7 +184,13 @@ KeyPaiSho.GameManager.prototype.revealPossiblePlacementPoints = function (player
             this.board.ensureCenterPointGateNotPossibleMove();
         }
     } else {
-        this.board.revealPossibleAccentPlacementPoints();
+        this.board.revealPossibleAccentPlacementPoints(player);
+    }
+
+    if (additionalPoints) {
+        additionalPoints.forEach((notationPoint) => {
+            this.board.setPossiblePlacementPoint(notationPoint);
+        });
     }
 
     if (!ignoreActuate) {

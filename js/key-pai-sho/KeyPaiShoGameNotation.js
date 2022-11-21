@@ -1,20 +1,17 @@
 /* Key Pai Sho Notation */
 
 KeyPaiSho.NotationMove = function (text) {
-    this.fullMoveText = text;
-    this.analyzeMove();
-}
-
-KeyPaiSho.NotationMove.prototype.analyzeMove = function () {
     this.valid = true;
+    this.fullMoveText = "";
+    this.moveTextOnly = "";
 
     // Get move number
-    var parts = this.fullMoveText.split(".");
+    var parts = text.split(".");
 
-    var moveNumAndPlayer = parts[0];
+    this.fullMoveText += parts[0];
 
-    this.moveNum = parseInt(moveNumAndPlayer.slice(0, -1));
-    this.playerCode = moveNumAndPlayer.charAt(moveNumAndPlayer.length - 1);
+    this.moveNum = parseInt(this.fullMoveText.slice(0, -1));
+    this.playerCode = this.fullMoveText.charAt(this.fullMoveText.length - 1);
 
     // Get player (Guest or Host)
     if (this.playerCode === 'G') {
@@ -23,13 +20,21 @@ KeyPaiSho.NotationMove.prototype.analyzeMove = function () {
         this.player = HOST;
     }
 
-    var moveText = parts[1];
-    this.moveTextOnly = moveText;
+    this.fullMoveText += ".";
 
+    for (var i = 1; i < parts.length; i++) {
+        this.addToMove(parts[i]);
+    }
+}
+
+KeyPaiSho.NotationMove.prototype.addToMove = function (moveText) {
     // If no move text, ignore and move on to next
     if (!moveText) {
         return;
     }
+
+    this.fullMoveText += "." + moveText;
+    this.moveTextOnly = this.fullMoveText.substring(this.fullMoveText.indexOf('.') + 1);
 
     if (!gameOptionEnabled(NO_EFFECT_TILES) && this.moveNum === 0) {
         // Keep the accent tiles listed in move
@@ -41,20 +46,31 @@ KeyPaiSho.NotationMove.prototype.analyzeMove = function () {
     /* Set Move Type */
     var char0 = moveText.charAt(0);
     if (char0 === '(') {
-        // Arranging move stuff
+        // Moving stuff
         this.moveType = MOVING;
         // Get the two points from string like: (-8,0)-(-6,3)
         var parts = moveText.substring(moveText.indexOf('(') + 1).split(')-(');
         this.startPoint = new NotationPoint(parts[0]);
         this.endPoint = new NotationPoint(parts[1].substring(0, parts[1].indexOf(')')));
     } else {
-        // Playing move stuff
+        // Playing stuff
         this.playedTile = moveText.substring(0, moveText.indexOf('('));
         this.moveType = new KeyPaiSho.Tile(this.playedTile, 'H').type === ACCENT_TILE ? PLACING : PLANTING;
-        if (moveText.endsWith(')')) {
-            this.endPoint = new NotationPoint(moveText.substring(moveText.indexOf('(') + 1, moveText.indexOf(')')));
+        if (this.extraStonePlacementPoint === null) {
+            if (moveText.endsWith(')')) {
+                this.extraStonePlacementPoint = new NotationPoint(moveText.substring(moveText.indexOf('(') + 1, moveText.indexOf(')')));
+            } else {
+                this.valid = false;
+            }
         } else {
-            this.valid = false;
+            if (this.playedTile === KeyPaiSho.TileCodes.Stone) {
+                this.extraStonePlacementPoint = null;
+            }
+            if (moveText.endsWith(')')) {
+                this.endPoint = new NotationPoint(moveText.substring(moveText.indexOf('(') + 1, moveText.indexOf(')')));
+            } else {
+                this.valid = false;
+            }
         }
     }
 };
@@ -75,6 +91,7 @@ KeyPaiSho.NotationBuilder = function () {
     // this.moveNum;	// Let's try making this magic
     // this.player;		// Magic
     this.moveType;
+    this.notationMove = null;
 
     // PLANTING AND PLACING
     this.playedTile;
@@ -91,14 +108,20 @@ KeyPaiSho.NotationBuilder = function () {
 }
 
 KeyPaiSho.NotationBuilder.prototype.getNotationMove = function (moveNum, player) {
-    var notationLine = moveNum + player.charAt(0) + ".";
-    if (this.moveType === MOVING) {
-        notationLine += "(" + this.startPoint.pointText + ")-(" + this.endPoint.pointText + ")";
-    } else {
-        notationLine += this.playedTile + "(" + this.endPoint.pointText + ")";
+    if (this.notationMove === null) {
+        var notationLine = moveNum + player.charAt(0) + ".";
+        this.notationMove = new KeyPaiSho.NotationMove(notationLine);
     }
 
-    return new KeyPaiSho.NotationMove(notationLine);
+    if (this.moveType === MOVING) {
+        notationLine = "(" + this.startPoint.pointText + ")-(" + this.endPoint.pointText + ")";
+    } else if (this.moveType === PLACING || this.moveType === PLANTING) {
+        notationLine = this.playedTile + "(" + this.endPoint.pointText + ")";
+    }
+
+    this.notationMove.addToMove(notationLine);
+
+    return this.notationMove;
 };
 
 // --------------------------------------- //

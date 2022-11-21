@@ -241,9 +241,16 @@ KeyPaiSho.Controller.prototype.unplayedTileClicked = function (tileDiv) {
         this.theGame.hidePossibleMovePoints();
         this.notationBuilder = new KeyPaiSho.NotationBuilder();
     } else {
-        if (this.notationBuilder.status === WAITING_FOR_MAIN_ACTION && tile.type === ACCENT_TILE) {
-            debug("An accent tile has already been played this turn. Cannot select an accent tile.");
-            return false;
+        if (tile.type === ACCENT_TILE) {
+            if (this.notationBuilder.status === WAITING_FOR_MAIN_ACTION) {
+                debug("An accent tile has already been played this turn. Cannot select an accent tile.");
+                return false;
+            }
+
+            if (this.theGame.board.numBloomingFlowersOnBoard() < 6 || this.theGame.board.numBloomingFlowersOnBoard(this.getCurrentPlayer()) === 0) {
+                debug("Not enough blooming flowers are on the board for an accent tile to be played.");
+                return false;
+            }
         }
         if (this.notationBuilder.status === WAITING_FOR_ACCENT_TILE && tile.type !== ACCENT_TILE) {
             debug("A tile has already been moved/planted this turn. Cannot select a flower tile.");
@@ -332,6 +339,11 @@ KeyPaiSho.Controller.prototype.pointClicked = function (htmlPoint) {
 
             var move = this.gameNotation.getNotationMoveFromBuilder(this.notationBuilder);
             this.theGame.hidePossibleMovePoints(false, move);
+            if (move.extraStonePlacementPoint === null) {
+                this.theGame.revealPossiblePlacementPoints(this.getCurrentPlayer(), this.notationBuilder.playedTile, [move.endPoint]);
+                return;
+            }
+
             this.theGame.runNotationMove(move);
 
             // Move all set. Add it to the notation!

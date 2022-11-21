@@ -379,11 +379,11 @@ KeyPaiSho.Board.prototype.forEachBoardPointWithTile = function (forEachFunc) {
     });
 };
 
-KeyPaiSho.Board.prototype.placeTile = function (tile, notationPoint, extraStonePoint) {
+KeyPaiSho.Board.prototype.placeTile = function (tile, notationPoint, extraPlacementPoint) {
     var returnValues = {};
 
     if (tile.type === ACCENT_TILE) {
-        this.placeAccent(tile, notationPoint, extraStonePoint);
+        this.placeAccent(tile, notationPoint, extraPlacementPoint);
     } else {
         if (tile.code === KeyPaiSho.TileCodes.Lotus
             && notationPoint.rowAndColumn.row === 8
@@ -407,27 +407,25 @@ KeyPaiSho.Board.prototype.putTileOnPoint = function (tile, notationPoint) {
     point.putTile(tile);
 };
 
-KeyPaiSho.Board.prototype.canPlaceAccentTile = function (point) {
-    return point.tile && point.tile.type !== ACCENT_TILE;
+KeyPaiSho.Board.prototype.canPlaceAccentTile = function (point, player, tileCode) {
+    if (tileCode === KeyPaiSho.TileCodes.Stone) {
+        return !point.hasTile() && !point.isType(GATE);
+    }
+    return point.tile && point.tile.ownerName === player && !point.isType(GATE) && point.tile.type !== ACCENT_TILE;
 };
 
 KeyPaiSho.Board.prototype.placeAccent = function (tile, notationPoint, extraPlacementPoint) {
     var rowAndCol = notationPoint.rowAndColumn;
     var boardPoint = this.cells[rowAndCol.row][rowAndCol.col];
+    var previousTile;
 
-    if (!boardPoint.hasTile() || boardPoint.tile.type === ACCENT_TILE) {
-        return false;
+    if (boardPoint.hasTile()) {
+        previousTile = boardPoint.removeTile();
     }
-    var previousTile = boardPoint.removeTile();
 
-    if (extraPlacementPoint !== undefined) {
-        var extraRowAndCol = extraStonePoint.rowAndColumn;
-        var extraPoint = this.cells[extraRowAndCol.row][extraRowAndCol.col];
-        if (!extraPoint.canHoldTile(tile)) {
-            boardPoint.putTile(previousTile);
-            return false;
-        }
-        boardPoint = extraPoint;
+    if (extraPlacementPoint) {
+        var extraRowAndCol = extraPlacementPoint.rowAndColumn;
+        boardPoint = this.cells[extraRowAndCol.row][extraRowAndCol.col];
     }
 
     boardPoint.putTile(tile);
@@ -1435,15 +1433,19 @@ KeyPaiSho.Board.prototype.setGuestGateOpen = function () {
     }
 };
 
-KeyPaiSho.Board.prototype.revealPossibleAccentPlacementPoints = function () {
+KeyPaiSho.Board.prototype.revealPossibleAccentPlacementPoints = function (player, tileCode) {
     var board = this;
     this.cells.forEach(function (row) {
         row.forEach(function (boardPoint) {
-            if (board.canPlaceAccentTile(this)) {
+            if (board.canPlaceAccentTile(boardPoint, player, tileCode)) {
                 boardPoint.addType(POSSIBLE_MOVE);
             }
         });
     });
+};
+
+KeyPaiSho.Board.prototype.setPossiblePlacementPoint = function (notationPoint) {
+    this.cells[notationPoint.rowAndColumn.row][notationPoint.rowAndColumn.col].addType(POSSIBLE_MOVE);
 };
 
 KeyPaiSho.Board.prototype.getCopy = function () {
@@ -1494,6 +1496,16 @@ KeyPaiSho.Board.prototype.numTilesOnBoardForPlayer = function (player) {
     }
     return count;
 };
+
+KeyPaiSho.Board.prototype.numBloomingFlowersOnBoard = function (player) {
+    var count = 0;
+    this.forEachBoardPointWithTile((boardPoint) => {
+        if (!boardPoint.isType(GATE) && boardPoint.tile.type !== ACCENT_TILE && (!player || boardPoint.tile.ownerName === player)) {
+            count++;
+        }
+    });
+    return count;
+}
 
 KeyPaiSho.Board.prototype.getSurroundness = function (player) {
     var up = 0;
