@@ -132,7 +132,7 @@ KeyPaiSho.GameManager.prototype.buildMovingGameLogText = function (move, moveRes
     }
 };
 
-KeyPaiSho.GameManager.prototype.revealPossibleMovePoints = function (player, boardPoint, ignoreActuate) {
+KeyPaiSho.GameManager.prototype.revealPossibleMovePoints = function (player, boardPoint, tileNum, ignoreActuate) {
     if (!boardPoint.hasTile()) {
         return;
     }
@@ -145,7 +145,7 @@ KeyPaiSho.GameManager.prototype.revealPossibleMovePoints = function (player, boa
             hideCenterPointTile = true;
         }
 
-        this.board.setPossibleMovePoints(boardPoint);
+        this.board.setPossibleMovePoints(boardPoint, tileNum);
     }
 
     if (!ignoreActuate) {

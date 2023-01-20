@@ -167,7 +167,7 @@ KeyPaiSho.Tile.prototype.getMovementDirectionWording = function () {
 };
 
 KeyPaiSho.Tile.prototype.movementMustPreserveDirection = function () {
-    return !(this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TileCodes.Dahlia);
+    return !(this.code === KeyPaiSho.TileCodes.Lotus || this.code === KeyPaiSho.TileCodes.FireLily);
 };
 
 

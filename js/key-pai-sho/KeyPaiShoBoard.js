@@ -490,7 +490,7 @@ KeyPaiSho.Board.prototype.isValidRowCol = function (rowCol) {
     return rowCol && rowCol.row >= 0 && rowCol.col >= 0 && rowCol.row <= this.size.row - 1 && rowCol.col <= this.size.col - 1;
 };
 
-KeyPaiSho.Board.prototype.moveTile = function (player, notationPointStart, notationPointEnd) {
+KeyPaiSho.Board.prototype.moveTile = function (notationPointStart, notationPointEnd, tileNum) {
     var startRowCol = notationPointStart.rowAndColumn;
     var endRowCol = notationPointEnd.rowAndColumn;
 
@@ -502,7 +502,7 @@ KeyPaiSho.Board.prototype.moveTile = function (player, notationPointStart, notat
     var boardPointStart = this.cells[startRowCol.row][startRowCol.col];
     var boardPointEnd = this.cells[endRowCol.row][endRowCol.col];
 
-    var tile = boardPointStart.removeTile();
+    var tile = boardPointStart.removeTile(tileNum);
     var capturedTile = boardPointEnd.tile;
 
     if (!tile) {
@@ -1141,7 +1141,7 @@ KeyPaiSho.Board.prototype.getStartPointsFromGatePoint = function (boardPoint) {
     }
 };
 
-KeyPaiSho.Board.prototype.setPossibleMovePoints = function (boardPointStart) {
+KeyPaiSho.Board.prototype.setPossibleMovePoints = function (boardPointStart, tileNum) {
     if (boardPointStart.hasTile()) {
         if (boardPointStart.isType(GATE)) {
             var moveStartPoints = this.getStartPointsFromGatePoint(boardPointStart);
@@ -1169,13 +1169,21 @@ KeyPaiSho.Board.prototype.setPossibleMovePoints = function (boardPointStart) {
                 boardPointStart.putTile(movingTile);
             }
         } else {
+            var tile = boardPointStart.tile;
+            for (i = 0; i < tileNum; i++) {
+                if (tile.heldTile) {
+                    tile = tile.heldTile;
+                }
+            }
             this.setPossibleMovesForMovement(
                 {
-                    distance: boardPointStart.tile.getMoveDistance(),
-                    orthogonalMovement: boardPointStart.tile.hasOrthogonalMovement(),
-                    diagonalMovement: boardPointStart.tile.hasDiagonalMovement(),
-                    mustPreserveDirection: boardPointStart.tile.movementMustPreserveDirection()
-                }, boardPointStart);
+                    distance: tile.getMoveDistance(),
+                    orthogonalMovement: tile.hasOrthogonalMovement(),
+                    diagonalMovement: tile.hasDiagonalMovement(),
+                    mustPreserveDirection: tile.movementMustPreserveDirection()
+                },
+                boardPointStart
+            );
         }
     }
 };
