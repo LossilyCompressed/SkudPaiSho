@@ -244,3 +244,22 @@ KeyPaiSho.TileManager.prototype.getCopy = function () {
     return copy;
 };
 
+KeyPaiSho.TileManager.prototype.removeExcessSpecialTiles = function (chosenTiles, player) {
+    var tilePile = player === HOST ? this.hostTiles : this.guestTiles;
+
+    var removeTileIndexes = [];
+    tilePile.forEach((tile, i) => {
+        if (tile.type !== BASIC_FLOWER && !chosenTiles.includes(tile)) {
+            removeTileIndexes.unshift(i);
+        }
+    });
+
+    removeTileIndexes.forEach((index) => {
+        tilePile.splice(index, 1);
+    });
+};
+
+KeyPaiSho.TileManager.prototype.removeTile = function (tile, player) {
+    var tilePile = player === HOST ? this.hostTiles : this.guestTiles;
+    tilePile.splice(tilePile.indexOf(tile), 1);
+};
