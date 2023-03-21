@@ -9,6 +9,7 @@ var PLANTING = "Planting";
 var PLACING = "Placing";
 var ARRANGING = "Arranging";
 var MOVING = "Moving";
+var USING_ACCENT = "Accent";
 
 var DEPLOY = "Deploy";
 var MOVE = "Move";
