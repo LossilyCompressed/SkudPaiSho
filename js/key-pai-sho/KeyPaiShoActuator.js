@@ -209,61 +209,72 @@ KeyPaiSho.Actuator.prototype.addBoardPoint = function (boardPoint, moveToAnimate
     ) {
         theDiv.classList.add("hasTile");
 
-        var theImg = document.createElement("img");
-        var flags = {
-            drainedOnThisTurn: false,
-            wasArranged: false
-        };
+        var tile = boardPoint.tile;
+        var offset = 0;
 
-        if (moveToAnimate) {
-            this.doAnimateBoardPoint(boardPoint, moveToAnimate, moveAnimationBeginStep, theImg, flags);
-        }
+        while (tile) {
+            var theImg = document.createElement("img");
+            var flags = {
+                drainedOnThisTurn: false,
+                wasArranged: false
+            };
 
-        var srcValue = this.getTileSrcPath();
-        theImg.src = srcValue + boardPoint.tile.getImageName() + ".png";
+            if (moveToAnimate) {
+                this.doAnimateBoardPoint(boardPoint, moveToAnimate, moveAnimationBeginStep, theImg, flags);
+            }
 
-        if (boardPoint.tile.harmonyOwners
-            && !gameOptionEnabled(NO_HARMONY_VISUAL_AIDS)
-            && getUserGamePreference(KeyPaiSho.Controller.hideHarmonyAidsKey) !== "true") {
-            if (this.animationOn && flags.wasArranged) {
-                setTimeout(function () {//Delay harmony outline until after a piece has moved
-                    for (var i = 0; i < boardPoint.tile.harmonyOwners.length; i++) {
-                        theDiv.classList.add(boardPoint.tile.harmonyOwners[i] + "harmony");
+            var srcValue = this.getTileSrcPath();
+            theImg.src = srcValue + tile.getImageName() + ".png";
+
+            if (tile.harmonyOwners
+                && !gameOptionEnabled(NO_HARMONY_VISUAL_AIDS)
+                && getUserGamePreference(KeyPaiSho.Controller.hideHarmonyAidsKey) !== "true") {
+                if (this.animationOn && flags.wasArranged) {
+                    setTimeout(function () {//Delay harmony outline until after a piece has moved
+                        for (var i = 0; i < tile.harmonyOwners.length; i++) {
+                            theDiv.classList.add(tile.harmonyOwners[i] + "harmony");
+                        }
+                    }, (1 - moveAnimationBeginStep) * pieceAnimationLength);
+                } else {
+                    for (var i = 0; i < tile.harmonyOwners.length; i++) {
+                        theDiv.classList.add(tile.harmonyOwners[i] + "harmony");
                     }
-                }, (1 - moveAnimationBeginStep) * pieceAnimationLength);
-            } else {
-                for (var i = 0; i < boardPoint.tile.harmonyOwners.length; i++) {
-                    theDiv.classList.add(boardPoint.tile.harmonyOwners[i] + "harmony");
                 }
             }
-        }
 
-        if (boardPoint.tile.drained || boardPoint.tile.trapped) {
-            if (flags.drainedOnThisTurn) {
-                setTimeout(function () {
+            if (tile.drained || tile.trapped) {
+                if (flags.drainedOnThisTurn) {
+                    setTimeout(function () {
+                        theDiv.classList.add("drained");
+                    }, pieceAnimationLength);
+                } else {
                     theDiv.classList.add("drained");
-                }, pieceAnimationLength);
-            } else {
-                theDiv.classList.add("drained");
+                }
             }
-        }
 
-        theDiv.appendChild(theImg);
+            theImg.style.position = "absolute";
+            theImg.style.left = offset + "px";
+            theImg.style.bottom = offset + "px";
+            theDiv.appendChild(theImg);
 
-        /* If capturing, preserve tile being captured on board during animation */
-        if (this.animationOn && moveToAnimate && moveToAnimate.capturedTile
-            && isSamePoint(moveToAnimate.endPoint, boardPoint.col, boardPoint.row) && moveAnimationBeginStep === 0) {
-            var theImgCaptured = document.createElement("img");
-            theImgCaptured.src = srcValue + moveToAnimate.capturedTile.getImageName() + ".png";
-            theImgCaptured.classList.add("underneath");
-            theDiv.appendChild(theImgCaptured);
+            /* If capturing, preserve tile being captured on board during animation */
+            if (this.animationOn && moveToAnimate && moveToAnimate.capturedTile
+                && isSamePoint(moveToAnimate.endPoint, boardPoint.col, boardPoint.row) && moveAnimationBeginStep === 0) {
+                var theImgCaptured = document.createElement("img");
+                theImgCaptured.src = srcValue + moveToAnimate.capturedTile.getImageName() + ".png";
+                theImgCaptured.classList.add("underneath");
+                theDiv.appendChild(theImgCaptured);
 
-            /* After animation, hide captured tile */
-            setTimeout(function () {
-                requestAnimationFrame(function () {
-                    theImgCaptured.style.visibility = "hidden";
-                });
-            }, pieceAnimationLength);
+                /* After animation, hide captured tile */
+                setTimeout(function () {
+                    requestAnimationFrame(function () {
+                        theImgCaptured.style.visibility = "hidden";
+                    });
+                }, pieceAnimationLength);
+            }
+
+            tile = tile.heldTile;
+            offset = offset + 4;
         }
     }
 

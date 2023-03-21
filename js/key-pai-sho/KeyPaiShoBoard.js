@@ -371,6 +371,21 @@ KeyPaiSho.Board.prototype.forEachBoardPoint = function (forEachFunc) {
         });
     });
 };
+
+KeyPaiSho.Board.prototype.forEachBoardPointInDirection = function (sourcePoint, rowChange, colChange, forEachFunc) {
+    var rowToCheck = sourcePoint.row + rowChange;
+    var colToCheck = sourcePoint.col + colChange;
+
+    var checkPoint = this.getBoardPoint(rowToCheck, colToCheck);
+
+    while (this.isValidRowCol(checkPoint) && !checkPoint.isType(GATE)) {
+        forEachFunc(checkPoint);
+        rowToCheck += rowChange;
+        colToCheck += colChange;
+        checkPoint = this.getBoardPoint(rowToCheck, colToCheck);
+    }
+}
+
 KeyPaiSho.Board.prototype.forEachBoardPointWithTile = function (forEachFunc) {
     this.forEachBoardPoint(function (boardPoint) {
         if (boardPoint.hasTile()) {
@@ -490,18 +505,7 @@ KeyPaiSho.Board.prototype.isValidRowCol = function (rowCol) {
     return rowCol && rowCol.row >= 0 && rowCol.col >= 0 && rowCol.row <= this.size.row - 1 && rowCol.col <= this.size.col - 1;
 };
 
-KeyPaiSho.Board.prototype.moveTile = function (notationPointStart, notationPointEnd, tileNum) {
-    var startRowCol = notationPointStart.rowAndColumn;
-    var endRowCol = notationPointEnd.rowAndColumn;
-
-    if (!this.isValidRowCol(startRowCol) || !this.isValidRowCol(endRowCol)) {
-        debug("That point does not exist. So it's not gonna happen.");
-        return false;
-    }
-
-    var boardPointStart = this.cells[startRowCol.row][startRowCol.col];
-    var boardPointEnd = this.cells[endRowCol.row][endRowCol.col];
-
+KeyPaiSho.Board.prototype.moveTile = function (boardPointStart, boardPointEnd, tileNum) {
     var tile = boardPointStart.removeTile(tileNum);
     var capturedTile = boardPointEnd.tile;
 
@@ -530,9 +534,17 @@ KeyPaiSho.Board.prototype.moveTile = function (notationPointStart, notationPoint
     // Check for harmonies
     this.analyzeHarmonies();
 
+    var pickedUpTile = false;
+    if (this.canCarry(tile, boardPointEnd)) {
+        tile.heldTile = capturedTile;
+        capturedTile = null;
+        pickedUpTile = true;
+    }
+
     return {
         movedTile: tile,
-        capturedTile: capturedTile
+        capturedTile: capturedTile,
+        pickedUpTile: pickedUpTile
     }
 };
 
@@ -578,8 +590,13 @@ KeyPaiSho.Board.prototype.drainAndTrapTilesSurroundingPointIfNeeded = function (
 
 KeyPaiSho.Board.prototype.canCapture = function (tile, boardPointEnd) {
     return tile.code === KeyPaiSho.TileCodes.Dragon
-        && (boardPointEnd.tile.code !== KeyPaiSho.TileCodes.Badgermole || boardPointEnd.tile.riderTile === null);
+        && (boardPointEnd.tile.code !== KeyPaiSho.TileCodes.Badgermole || boardPointEnd.tile.heldTile === null);
 };
+
+KeyPaiSho.Board.prototype.canCarry = function (tile, boardPointEnd) {
+    return (tile.code === KeyPaiSho.TileCodes.SkyBison || tile.code === KeyPaiSho.TileCodes.Badgermole)
+        && !tile.heldTile && boardPointEnd.tile && !boardPointEnd.tile.heldTile;
+}
 
 /* Does no verifying that tile can reach target point with standard movement */
 KeyPaiSho.Board.prototype.couldMoveTileToPoint = function (player, boardPointStart, boardPointEnd, tile) {
@@ -611,12 +628,17 @@ KeyPaiSho.Board.prototype.couldMoveTileToPoint = function (player, boardPointSta
         canCapture = this.canCapture(tile, boardPointEnd);
     }
 
-    // If endpoint has a tile there that can't be captured, that is wrong.
-    if (boardPointEnd.hasTile() && !canCapture) {
+    var canCarry = false;
+    if (boardPointEnd.hasTile()) {
+        canCarry = this.canCarry(tile, boardPointEnd);
+    }
+
+    // If endpoint has a tile there that can't be captured or carried, that is wrong.
+    if (boardPointEnd.hasTile() && !canCapture && !canCarry) {
         return false;
     }
 
-    if (!boardPointEnd.canHoldTile(tile, canCapture)) {
+    if (!boardPointEnd.canHoldTile(tile, (canCapture || canCarry))) {
         return false;
     }
 
@@ -650,12 +672,17 @@ KeyPaiSho.Board.prototype.canMoveTileToPoint = function (player, boardPointStart
         canCapture = this.canCapture(tile, boardPointEnd);
     }
 
+    var canCarry = false;
+    if (boardPointEnd.hasTile()) {
+        canCarry = this.canCarry(tile, boardPointEnd);
+    }
+
     // If endpoint has a tile there that can't be captured, that is wrong.
-    if (boardPointEnd.hasTile() && !canCapture) {
+    if (boardPointEnd.hasTile() && !canCapture && !canCarry) {
         return false;
     }
 
-    if (!boardPointEnd.canHoldTile(boardPointStart.tile, canCapture)) {
+    if (!boardPointEnd.canHoldTile(boardPointStart.tile, (canCapture || canCarry))) {
         return false;
     }
 
@@ -876,8 +903,8 @@ KeyPaiSho.Board.prototype.getTileHarmonies = function (boardPoint) {
     var rowAndCol = boardPoint;
     var tileHarmonies = [];
 
-    if (tile.riderTile) {
-        tile = tile.riderTile;
+    if (tile.heldTile) {
+        tile = tile.heldTile;
     }
 
     if (this.cells[rowAndCol.row][rowAndCol.col].isType(GATE) || tile.type === ACCENT_TILE) {
@@ -1141,7 +1168,7 @@ KeyPaiSho.Board.prototype.getStartPointsFromGatePoint = function (boardPoint) {
     }
 };
 
-KeyPaiSho.Board.prototype.setPossibleMovePoints = function (boardPointStart, tileNum) {
+KeyPaiSho.Board.prototype.setPossibleMovePoints = function (boardPointStart, tileNum = 0) {
     if (boardPointStart.hasTile()) {
         if (boardPointStart.isType(GATE)) {
             var moveStartPoints = this.getStartPointsFromGatePoint(boardPointStart);
