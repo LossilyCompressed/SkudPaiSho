@@ -10,8 +10,16 @@ KeyPaiSho.Controller = function (gameContainer, isMobile) {
     this.actuator = new KeyPaiSho.Actuator(gameContainer, isMobile, isAnimationsOn());
 
     this.resetGameManager();
-    this.resetNotationBuilder();
-    this.resetGameNotation();
+    this.turnBuilder = new KeyPaiSho.TurnBuilder(GUEST, this.theGame, playingOnlineGame());
+    document.getElementById('endTurnButton').onclick = () => {
+        this.turnBuilder.endTurn();
+        KeyPaiSho.Controller.hideEndTurnButton();
+    };
+
+    document.getElementById('useAccentButton').onclick = () => {
+        this.turnBuilder.addToAction({ usingAccentTile: true });
+        this.callActuate();
+    };
 
     this.hostAccentTiles = [];
     this.guestAccentTiles = [];
@@ -48,6 +56,9 @@ KeyPaiSho.Controller.prototype.getNewGameNotation = function () {
 
 KeyPaiSho.Controller.getHostTilesContainerDivs = function () {
     var divs = ' \
+        <button id="useAccentButton" style="width:91%; box-shadow: 0px 0px 4px 1px var(--color); margin-bottom:10%;"> \
+            Activate Accent Tile \
+        </button> \
             <div class="H' + KeyPaiSho.TileCodes.Red3 + '"></div> \
             <div class="H' + KeyPaiSho.TileCodes.White3 + '"></div> \
             <div class="H' + KeyPaiSho.TileCodes.RedO + '"></div> \
@@ -94,8 +105,27 @@ KeyPaiSho.Controller.getGuestTilesContainerDivs = function () {
             <div class="G' + KeyPaiSho.TileCodes.SkyBison + '"></div> \
             <div class="G' + KeyPaiSho.TileCodes.Dahlia + '"></div> \
             <div class="G' + KeyPaiSho.TileCodes.FireLily + '"></div> \
+        <button id="endTurnButton" class="gone" style="width:91%; box-shadow: 0px 0px 4px 1px var(--color); margin-top:10%;"> \
+            End Turn \
+        </button> \
     ';
     return divs;
+};
+
+KeyPaiSho.Controller.showEndTurnButton = function () {
+    document.getElementById('endTurnButton').classList.remove('gone');
+};
+
+KeyPaiSho.Controller.hideEndTurnButton = function () {
+    document.getElementById('endTurnButton').classList.add('gone');
+};
+
+KeyPaiSho.Controller.showUseAccentButton = function () {
+    document.getElementById('useAccentButton').classList.remove('gone');
+};
+
+KeyPaiSho.Controller.hideUseAccentButton = function () {
+    document.getElementById('useAccentButton').classList.add('gone');
 };
 
 KeyPaiSho.Controller.prototype.callActuate = function () {
@@ -139,7 +169,7 @@ KeyPaiSho.Controller.prototype.getDefaultHelpMessageText = function () {
 KeyPaiSho.Controller.prototype.getAdditionalMessage = function () {
     var msg = "";
 
-    if (this.gameNotation.moves.length === 0) {
+    if (this.turnBuilder.moves.length === 0) {
         if (onlinePlayEnabled && gameId < 0 && userIsLoggedIn()) {
             msg += "Click <em>Join Game</em> above to join another player's game. Or, you can start a game that other players can join by making the first move. <br />";
         } else {
@@ -159,111 +189,26 @@ KeyPaiSho.Controller.prototype.getAdditionalMessage = function () {
 };
 
 KeyPaiSho.Controller.prototype.unplayedTileClicked = function (tileDiv) {
-    this.theGame.markingManager.clearMarkings();
-    this.callActuate();
-
     if (this.theGame.getWinner()) {
         return;
     }
     if (!myTurn()) {
         return;
     }
-    if (currentMoveIndex !== this.gameNotation.moves.length) {
+    /*
+    if (currentMoveIndex !== this.turnBuilder.moves.length) {
         debug("Can only interact if all moves are played.");
         return;
     }
+    */
 
-    var divName = tileDiv.getAttribute("name");	// Like: GWD or HL
-    var tileId = parseInt(tileDiv.getAttribute("id"));
-    var playerCode = divName.charAt(0);
-    var tileCode = divName.substring(1);
-
-    var player = GUEST;
-    if (playerCode === 'H') {
-        player = HOST;
+    var tile = this.theGame.tileManager.peekTile(this.getCurrentPlayer(), null, parseInt(tileDiv.getAttribute("id")));
+    var addResult = this.turnBuilder.addToAction({ tile: tile });
+    if (addResult === KeyPaiSho.TurnReturnStatus.ACTION_DONE) {
+        this.turnBuilder.endAction();
+        KeyPaiSho.Controller.showEndTurnButton();
     }
-
-    var tile = this.theGame.tileManager.peekTile(player, tileCode, tileId);
-
-    if (tile.ownerName !== getCurrentPlayer()) {
-        // debug("That's not your tile!");
-        return;
-    }
-
-    if (this.gameNotation.moves.length <= 1 && !gameOptionEnabled(NO_EFFECT_TILES)) {
-        // Choosing Effect Tiles
-        if (tile.type !== ACCENT_TILE && tile.type !== SPECIAL_FLOWER) {
-            return;
-        }
-
-        if (!tile.selectedFromPile) {
-            tile.selectedFromPile = true;
-            var removeTileCodeFrom = this.hostAccentTiles;
-            if (getCurrentPlayer() === GUEST) {
-                removeTileCodeFrom = this.guestAccentTiles;
-            }
-
-            removeTileCodeFrom.splice(removeTileCodeFrom.indexOf(tileCode), 1);
-
-            this.theGame.actuate();
-            return;
-        }
-
-        tile.selectedFromPile = false;
-
-        var accentTilesNeededToStart = 6;
-
-        if (getCurrentPlayer() === HOST) {
-            this.hostAccentTiles.push(tileCode);
-
-            if (this.hostAccentTiles.length === accentTilesNeededToStart) {
-                var move = new KeyPaiSho.NotationMove("0H." + this.hostAccentTiles.join());
-                this.gameNotation.addMove(move);
-                if (onlinePlayEnabled) {
-                    createGameIfThatIsOk(GameType.KeyPaiSho.id);
-                } else {
-                    finalizeMove();
-                }
-            }
-        } else {
-            this.guestAccentTiles.push(tileCode);
-
-            if (this.guestAccentTiles.length === accentTilesNeededToStart) {
-                var move = new KeyPaiSho.NotationMove("0G." + this.guestAccentTiles.join());
-                this.gameNotation.addMove(move);
-                // No finalize move because it is still Guest's turn
-                rerunAll();
-                showResetMoveMessage();
-            }
-        }
-        this.theGame.actuate();
-    } else if (this.notationBuilder.status === WAITING_FOR_ENDPOINT) {
-        this.theGame.hidePossibleMovePoints();
-        this.notationBuilder = new KeyPaiSho.NotationBuilder();
-    } else {
-        if (tile.type === ACCENT_TILE) {
-            if (this.notationBuilder.status === WAITING_FOR_MAIN_ACTION) {
-                debug("An accent tile has already been played this turn. Cannot select an accent tile.");
-                return false;
-            }
-
-            if (this.theGame.board.numBloomingFlowersOnBoard() < 6 || this.theGame.board.numBloomingFlowersOnBoard(this.getCurrentPlayer()) === 0) {
-                debug("Not enough blooming flowers are on the board for an accent tile to be played.");
-                return false;
-            }
-        }
-        if (this.notationBuilder.status === WAITING_FOR_ACCENT_TILE && tile.type !== ACCENT_TILE) {
-            debug("A tile has already been moved/planted this turn. Cannot select a flower tile.");
-            return false;
-        }
-
-        tile.selectedFromPile = true;
-
-        this.notationBuilder.moveType = tile.type === ACCENT_TILE ? PLACING : PLANTING;
-        this.notationBuilder.playedTile = tileCode;
-        this.notationBuilder.status = WAITING_FOR_ENDPOINT;
-        this.theGame.revealPossiblePlacementPoints(getCurrentPlayer(), tile);
-    }
+    this.callActuate();
 };
 
 
@@ -294,74 +239,27 @@ KeyPaiSho.Controller.prototype.RmbUp = function (htmlPoint) {
 }
 
 KeyPaiSho.Controller.prototype.pointClicked = function (htmlPoint) {
-    this.theGame.markingManager.clearMarkings();
-    this.callActuate();
-
     if (this.theGame.getWinner()) {
         return;
     }
     if (!myTurn()) {
         return;
     }
-    if (currentMoveIndex !== this.gameNotation.moves.length) {
+    /*
+    if (currentMoveIndex !== this.turnBuilder.moves.length) {
         debug("Can only interact if all moves are played.");
         return;
     }
+    */
 
-    var npText = htmlPoint.getAttribute("name");
-
-    var notationPoint = new NotationPoint(npText);
-    var rowCol = notationPoint.rowAndColumn;
-    var boardPoint = this.theGame.board.cells[rowCol.row][rowCol.col];
-
-    if (this.notationBuilder.status === BRAND_NEW || this.notationBuilder.status === WAITING_FOR_MAIN_ACTION) {
-        if (boardPoint.hasTile()) {
-            if (boardPoint.tile.ownerName !== getCurrentPlayer()) {
-                debug("That's not your tile!");
-                return;
-            }
-
-            if (boardPoint.tile.trapped) {
-                return;
-            }
-
-            this.notationBuilder.status = WAITING_FOR_ENDPOINT;
-            this.notationBuilder.moveType = MOVING;
-            this.notationBuilder.startPoint = new NotationPoint(htmlPoint.getAttribute("name"));
-
-            this.theGame.revealPossibleMovePoints(getCurrentPlayer(), boardPoint);
-        }
-    } else if (this.notationBuilder.status === WAITING_FOR_ENDPOINT) {
-        if (boardPoint.isType(POSSIBLE_MOVE)) {
-            // They're trying to move there! And they can! Exciting!
-            // Need the notation!
-            this.notationBuilder.endPoint = new NotationPoint(htmlPoint.getAttribute("name"));
-
-            var move = this.gameNotation.getNotationMoveFromBuilder(this.notationBuilder);
-            this.theGame.hidePossibleMovePoints(false, move);
-            if (move.extraStonePlacementPoint === null) {
-                this.theGame.revealPossiblePlacementPoints(this.getCurrentPlayer(), this.notationBuilder.playedTile, [move.endPoint]);
-                return;
-            }
-
-            this.theGame.runNotationMove(move);
-
-            // Move all set. Add it to the notation!
-            this.gameNotation.addMove(move);
-            if (onlinePlayEnabled && this.gameNotation.moves.length === 1) {
-                createGameIfThatIsOk(GameType.KeyPaiSho.id);
-            } else {
-                if (playingOnlineGame()) {
-                    callSubmitMove(null, null, move);
-                } else {
-                    finalizeMove();
-                }
-            }
-        } else {
-            this.theGame.hidePossibleMovePoints();
-            this.notationBuilder = new KeyPaiSho.NotationBuilder();
-        }
+    var point = new NotationPoint(htmlPoint.getAttribute("name"));
+    var boardPoint = this.theGame.board.getBoardPoint(point.rowAndColumn.row, point.rowAndColumn.col);
+    var addResult = this.turnBuilder.addToAction({ position: boardPoint });
+    if (addResult === KeyPaiSho.TurnReturnStatus.ACTION_DONE) {
+        this.turnBuilder.endAction();
+        KeyPaiSho.Controller.showEndTurnButton();
     }
+    this.callActuate();
 };
 
 KeyPaiSho.Controller.prototype.getTileMessage = function (tileDiv) {
@@ -512,25 +410,7 @@ KeyPaiSho.Controller.prototype.getAiList = function () {
 };
 
 KeyPaiSho.Controller.prototype.getCurrentPlayer = function () {
-    if (!gameOptionEnabled(NO_EFFECT_TILES) && this.gameNotation.moves.length <= 1) {
-        if (this.gameNotation.moves.length === 0) {
-            return HOST;
-        } else {
-            return GUEST;
-        }
-    }
-
-    if (this.gameNotation.moves.length < 1) {
-        return HOST;
-    }
-
-    var lastPlayer = this.gameNotation.moves[this.gameNotation.moves.length - 1].player;
-
-    if (lastPlayer === HOST) {
-        return GUEST;
-    } else if (lastPlayer === GUEST) {
-        return HOST;
-    }
+    return this.turnBuilder.currentMove.player;
 };
 
 KeyPaiSho.Controller.prototype.cleanup = function () {
