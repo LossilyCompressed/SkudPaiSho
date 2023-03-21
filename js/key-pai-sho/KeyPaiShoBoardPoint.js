@@ -20,6 +20,26 @@ KeyPaiSho.BoardPoint.prototype.removeType = function (type) {
     }
 };
 
+/**
+ * Returns the quadrant of the board that this point is in.
+ * @returns Number - The quadrant as if the board were a cartesian plane, from 1 to 4.
+ */
+KeyPaiSho.BoardPoint.prototype.getQuadrant = function () {
+    if (this.row >= 0) {
+        if (this.col > 0) {
+            return 1;
+        } else {
+            return 2;
+        }
+    } else {
+        if (this.col > 0) {
+            return 4;
+        } else {
+            return 3;
+        }
+    }
+};
+
 KeyPaiSho.BoardPoint.prototype.getConsoleDisplay = function () {
     if (this.tile) {
         return this.tile.getConsoleDisplay();
