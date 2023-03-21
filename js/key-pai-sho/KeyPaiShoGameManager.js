@@ -159,7 +159,6 @@ KeyPaiSho.GameManager.prototype.playerMustMoveCenterLotus = function (player) {
 
 KeyPaiSho.GameManager.prototype.hidePossibleMovePoints = function (ignoreActuate, moveToAnimate) {
     this.board.removePossibleMovePoints();
-    this.tileManager.removeSelectedTileFlags();
 
     if (this.centerGateActive) {
         var centerTile = this.board.getBoardPoint(8, 8).removeTile();
@@ -195,6 +194,90 @@ KeyPaiSho.GameManager.prototype.revealPossiblePlacementPoints = function (player
 
     if (!ignoreActuate) {
         this.actuate();
+    }
+};
+
+KeyPaiSho.GameManager.prototype.revealPossibleAccentTiles = function (exceptAccentTileIds, mainActionUsed, player, ignoreActuate) {
+    this.board.forEachBoardPointWithTile((boardPoint) => {
+        if (boardPoint.tile.ownerName === player && !exceptAccentTileIds.includes(boardPoint.tile.id)) {
+            if (boardPoint.tile.code === KeyPaiSho.TileCodes.Wheel || boardPoint.tile.code === KeyPaiSho.TileCodes.Koi
+                || (boardPoint.tile.code === KeyPaiSho.TileCodes.Boat && !mainActionUsed)) {
+                boardPoint.addType(POSSIBLE_MOVE);
+            }
+        }
+    });
+
+    if (!ignoreActuate) {
+        this.actuate();
+    }
+};
+
+KeyPaiSho.GameManager.prototype.revealPossibleAccentMoves = function (accentPoint, firstTargetPoint) {
+    if (accentPoint.tile.code === KeyPaiSho.TileCodes.Boat) {
+        this.board.setPossibleMovePoints(accentPoint);
+    } else if (accentPoint.tile.code === KeyPaiSho.TileCodes.Koi) {
+        var possibleTargetCheck = function (boardPoint) {
+            if (boardPoint.hasTile() && boardPoint.tile.code !== KeyPaiSho.TileCodes.Badgermole) {
+                boardPoint.addType(POSSIBLE_MOVE);
+            }
+        };
+
+        if (firstTargetPoint) {
+            rowDiff = firstTargetPoint.row - accentPoint.row;
+            colDiff = firstTargetPoint.col - accentPoint.col;
+            rowChange = rowDiff === 0 ? 0 : rowDiff > 0 ? -1 : 1;
+            colChange = colDiff === 0 ? 0 : rowDiff > 0 ? 1 : -1;
+            this.board.forEachBoardPointInDirection(accentPoint, rowChange, colChange, possibleTargetCheck);
+        } else {
+            this.board.forEachBoardPointInDirection(accentPoint, 0, 1, possibleTargetCheck);
+            this.board.forEachBoardPointInDirection(accentPoint, 0, -1, possibleTargetCheck);
+            this.board.forEachBoardPointInDirection(accentPoint, 1, 1, possibleTargetCheck);
+            this.board.forEachBoardPointInDirection(accentPoint, 1, -1, possibleTargetCheck);
+            this.board.forEachBoardPointInDirection(accentPoint, -1, 1, possibleTargetCheck);
+            this.board.forEachBoardPointInDirection(accentPoint, -1, -1, possibleTargetCheck);
+            this.board.forEachBoardPointInDirection(accentPoint, -1, 0, possibleTargetCheck);
+            this.board.forEachBoardPointInDirection(accentPoint, 1, 0, possibleTargetCheck);
+        }
+    }
+};
+
+KeyPaiSho.GameManager.prototype.activateAccentTile = function (accentPoint, firstTargetPoint, secondTargetPoint) {
+    if (firstTargetPoint) {  // The boat and the koi have one target point
+        if (secondTargetPoint) { // Only the koi has 2 target points, swap the tiles
+            moveTile = secondTargetPoint.tile;
+            secondTargetPoint.tile = firstTargetPoint.tile;
+            firstTargetPoint.tile = moveTile;
+        } else {    //Only the boat has a single target point, move all of the surrounding tiles
+            rowChange = firstTargetPoint.row - accentPoint.row;
+            colChange = firstTargetPoint.col - accentPoint.col;
+            this.board.getSurroundingRowAndCols(accentPoint).forEach((rowAndCol) => {
+                initialPoint = this.board.getBoardPoint(rowAndCol.row, rowAndCol.col);
+                targetPoint = this.board.getBoardPoint(rowAndCol.row + rowChange, rowAndCol.col + colChange);
+                if (initialPoint.hasTile()) {
+                    targetPoint.tile = initialPoint.removeTile();
+                }
+            });
+
+            firstTargetPoint.tile = accentPoint.removeTile();
+        }
+    } else {    // Only the wheel has no target points
+        var rowCols = this.board.getSurroundingRowAndCols(accentPoint);
+        var results = [];
+        for (var i = 0; i < rowCols.length; i++) {
+            // Save tile and target rowAndCol
+            var tile = this.board.cells[rowCols[i].row][rowCols[i].col].removeTile();
+            var targetRowCol = this.board.getClockwiseRowCol(accentPoint, rowCols[i]);
+            if (this.board.isValidRowCol(targetRowCol)) {
+                results.push([tile, targetRowCol]);
+            }
+        }
+
+        // go through and place tiles in target points
+        var self = this;
+        results.forEach(function (result) {
+            var bp = self.board.cells[result[1].row][result[1].col];
+            bp.putTile(result[0]);
+        });
     }
 };
 
